@@ -9,3 +9,4 @@ project/project/
 *.log
 .DS_Store
 project/metals.sbt
+.mcp.json
