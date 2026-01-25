@@ -10,3 +10,5 @@ scalaVersion := "2.12.21"
 addSbtPlugin(
   "org.scala-js" % "sbt-scalajs" % "1.20.2"
 ) // Q: What happens if client (plugin users) has different scalajs version ?
+
+libraryDependencies += "com.w47s0n" %% "consolebox" % "0.2.1"

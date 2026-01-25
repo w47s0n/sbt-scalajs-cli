@@ -10,3 +10,4 @@ project/project/
 .DS_Store
 project/metals.sbt
 .mcp.json
+test-project/node_modules
