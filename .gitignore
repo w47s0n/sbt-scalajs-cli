@@ -11,3 +11,4 @@ project/project/
 project/metals.sbt
 .mcp.json
 test-project/node_modules
+test-project/dist

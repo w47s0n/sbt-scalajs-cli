@@ -15,37 +15,75 @@ object ScalaJsCli extends AutoPlugin {
 
   case class Cmd(command: String, successPattern: Regex)
 
-  case class JSDevServer(
-      runCommand: Cmd,
-      installPackagesCommand: Cmd,
+  case class DevConfig(
+      command: Cmd,
       startupMessage: String,
       successMessage: String
+  )
+
+  case class BuildConfig(
+      command: Cmd,
+      startupMessage: String,
+      successMessage: String
+  )
+
+  case class JSToolConfig(
+      installPackagesCommand: Cmd,
+      dev: DevConfig,
+      build: BuildConfig
   )
 
   // Define custom settings and tasks
   object autoImport {
     val dev =
       taskKey[Unit]("Start dev mode with continuous Scala.js compilation")
-    val jsDevServer = settingKey[JSDevServer](
-      "JavaScript dev server configuration (command, patterns, messages)"
+    val publishDist =
+      taskKey[Unit]("Build optimized Scala.js and bundle the JavaScript application")
+
+    val jsTool = settingKey[JSToolConfig](
+      "JavaScript tool configuration (install, dev, and build commands)"
     )
 
     // Export case classes for user convenience
     type Cmd = ScalaJsCli.Cmd
     val Cmd = ScalaJsCli.Cmd
-    type JSDevServer = ScalaJsCli.JSDevServer
-    val JSDevServer = ScalaJsCli.JSDevServer
+    type DevConfig = ScalaJsCli.DevConfig
+    val DevConfig = ScalaJsCli.DevConfig
+    type BuildConfig = ScalaJsCli.BuildConfig
+    val BuildConfig = ScalaJsCli.BuildConfig
+    type JSToolConfig = ScalaJsCli.JSToolConfig
+    val JSToolConfig = ScalaJsCli.JSToolConfig
   }
 
   import autoImport._
 
   // Default settings that will be automatically added to projects
   override lazy val projectSettings = Seq(
+    publishDist := {
+      val _ = (Compile / fullLinkJS).value
+      val tool = jsTool.value
+
+      CLIHelper.bundleJs(
+        CLIHelper.JSBundle(
+          CLIHelper.Cmd(
+            tool.build.command.command,
+            tool.build.command.successPattern
+          ),
+          CLIHelper.Cmd(
+            tool.installPackagesCommand.command,
+            tool.installPackagesCommand.successPattern
+          ),
+          tool.build.startupMessage,
+          tool.build.successMessage
+        )
+      )
+    },
+
     dev := {
       val sourceDirs = (Compile / sourceDirectories).value.map(_.toPath).toList
       val taskKey = Compile / fastOptJS
       val sbtState = state.value
-      val devServer = jsDevServer.value
+      val tool = jsTool.value
 
       val compilationRunner = () =>
         try
@@ -67,27 +105,17 @@ object ScalaJsCli extends AutoPlugin {
         task,
         CLIHelper.JSDevServer(
           CLIHelper.Cmd(
-            devServer.runCommand.command,
-            devServer.runCommand.successPattern
+            tool.dev.command.command,
+            tool.dev.command.successPattern
           ),
           CLIHelper.Cmd(
-            devServer.installPackagesCommand.command,
-            devServer.installPackagesCommand.successPattern
+            tool.installPackagesCommand.command,
+            tool.installPackagesCommand.successPattern
           ),
-          devServer.startupMessage,
-          devServer.successMessage
+          tool.dev.startupMessage,
+          tool.dev.successMessage
         )
       )
     }
-  )
-
-  // Global settings (applied once per build)
-  override lazy val globalSettings = Seq(
-    // Add any global settings here
-  )
-
-  // Build-level settings
-  override lazy val buildSettings = Seq(
-    // Add any build-level settings here
   )
 }

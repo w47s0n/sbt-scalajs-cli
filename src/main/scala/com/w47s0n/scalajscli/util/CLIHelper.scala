@@ -44,33 +44,21 @@ object CLIHelper {
     }
   }
 
-  def buildFrontend(prefix: String = "", backendUrl: Option[String] = None): Unit = {
-    // installPackages(prefix)
-    val distPrefix = if (prefix.isEmpty) "" else s"$prefix/"
-    removeDistFolderIfAny(distPrefix)
+  case class JSBundle(
+    buildCommand: Cmd,
+    installPackagesCommand: Cmd,
+    startupMessage: String,
+    successMessage: String
+  )
 
-    val buildCommand = Seq("bun", "run", "build") ++ (if (prefix.nonEmpty) Seq("--cwd", prefix) else Seq.empty)
-    val pattern = ".built in.".r
-
-    val messages = Seq(
-      s"Web app is available at directory '${distPrefix}dist'"
-    ) ++ backendUrl.map(url => s"Backend URL of this build: $url") ++
-      backendUrl.map(_ => "Tip: Change backend URL: BACKEND_BASE_URL=http://myserver.com sbt")
-
-    val successMessage = boxedSuccess(messages: _*)
-    CommandWatcher.watch(buildCommand, pattern, successMessage)
-  }
-
-  def runTauriCommand(command: String, prefix: String = ""): Unit = {
-    val commandParts = command.split("\\s+")
-    val tauriCommand = Seq("bun", "run", "tauri") ++ commandParts ++ (if (prefix.nonEmpty) Seq("--cwd", prefix) else Seq.empty)
-    val exitCode = Process(tauriCommand).!
-    if (exitCode != 0) {
-      logError(s"Tauri command failed with exit code $exitCode")
-      throw new RuntimeException(s"tauri $command failed")
-    } else {
-      logSuccess("Tauri app built successfully!")
-    }
+  def bundleJs(bundle: JSBundle): Unit = {
+    installPackages(bundle.installPackagesCommand)
+    println(Consolebox.box(bundle.startupMessage))
+    CommandWatcher.watch(
+      bundle.buildCommand.command.split(" "),
+      bundle.buildCommand.successPattern,
+      boxedSuccess(bundle.successMessage)
+    )
   }
 
   def startDevEnvironment(fastOptJSTask: FastOptJS, js: JSDevServer): Unit = {
