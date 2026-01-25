@@ -14,7 +14,6 @@ object ScalaJsCli extends AutoPlugin {
 
   // Define custom settings and tasks
   object autoImport {
-    val hello = taskKey[Unit]("Prints Hello World")
     val dev = taskKey[Unit]("Start dev mode with continuous Scala.js compilation")
   }
 
@@ -23,7 +22,7 @@ object ScalaJsCli extends AutoPlugin {
   // Default settings that will be automatically added to projects
   override lazy val projectSettings = Seq(
     dev := {
-      val sourceDirs = (Compile / sourceDirectories).value
+      val sourceDirs = (Compile / sourceDirectories).value.map(_.toPath).toList
       val scalaVer   = scalaVersion.value
       val taskKey    = Compile / fastOptJS
       val sbtState   = state.value
@@ -43,12 +42,14 @@ object ScalaJsCli extends AutoPlugin {
             false
         }
 
-      CLIHelper.startDevEnvironment(
-        scalaVer,
-        sourceDirs,
-        compilationRunner,
-        Seq("npm", "run", "dev")
-      )
+      val task = CLIHelper.FastOptJS(sourceDirs, compilationRunner)
+      val jsDevServer = CLIHelper.JSDevServer(
+        CLIHelper.Cmd("npm run dev", "VITE.*ready".r), // VITE v5.4.21  ready in 157 ms
+        CLIHelper.Cmd("npm install", "packages installed".r),
+        "Starting development environment",
+        "Happy coding"
+        )
+      CLIHelper.startDevEnvironment(task, jsDevServer)
     },
   )
 

@@ -1,12 +1,12 @@
 package com.w47s0n.scalajscli.util
 
 import scala.sys.process._
-import java.nio.file.{Files, FileSystems}
+import java.nio.file.{Files, FileSystems, Path}
 import java.nio.file.StandardWatchEventKinds._
-import sbt.File
 import com.w47s0n.consolebox.Consolebox
 import com.w47s0n.consolebox.*
 import com.w47s0n.scalajscli.util.ScalaJSCodeWatcher.CompanionProcess
+import com.w47s0n.scalajscli.util.CLIHelper.FastOptJS
 
 object ScalaJSCodeWatcher {
   case class CompanionProcess(name: String, starter: () => Process)
@@ -15,8 +15,7 @@ object ScalaJSCodeWatcher {
 import LoggingUtils._
 
 final class ScalaJSCodeWatcher(
-  sourceDirectories: Seq[File],
-  compilationRunner: () => Boolean,  // Returns true on success, false on failure
+  scalaTask: FastOptJS,
   companionProcess: CompanionProcess,
 ) {
   private val DebounceMillis = 500L
@@ -33,7 +32,7 @@ final class ScalaJSCodeWatcher(
 
   def start(): Unit = {
     logScalaJsInfo("Running initial compilation...")
-    val succeeded = this.compilationRunner()
+    val succeeded = this.scalaTask.compilationRunner()
     if (succeeded) {
       logSuccess(s"[Scala.js] Initial compilation completed at ${currentTimeFormatted()}")
       startDevEnvironment()
@@ -63,13 +62,13 @@ final class ScalaJSCodeWatcher(
   }
 
   private def registerDirectories(watchService: java.nio.file.WatchService): Unit = {
-    sourceDirectories
-      .filter(_.exists())
+    scalaTask.sourceDirs
+      .filter(Files.exists(_))
       .foreach(registerDirectoryTree(_, watchService))
   }
 
-  private def registerDirectoryTree(rootDir: File, watchService: java.nio.file.WatchService): Unit = {
-    Files.walk(rootDir.toPath)
+  private def registerDirectoryTree(rootDir: Path, watchService: java.nio.file.WatchService): Unit = {
+    Files.walk(rootDir)
       .filter(Files.isDirectory(_))
       .filter(isWatchableDirectory)
       .forEach(_.register(watchService, ENTRY_CREATE, ENTRY_MODIFY, ENTRY_DELETE))
@@ -131,7 +130,7 @@ final class ScalaJSCodeWatcher(
 
   private def triggerRecompilation(fileCount: Int): Unit = {
     logScalaJsInfo(s"Detected $fileCount Scala file change(s), recompiling...")
-    val succeeded = this.compilationRunner()
+    val succeeded = this.scalaTask.compilationRunner()
     if (succeeded) {
       logScalaJsInfo(s"Recompilation completed at ${currentTimeFormatted()}")
     }

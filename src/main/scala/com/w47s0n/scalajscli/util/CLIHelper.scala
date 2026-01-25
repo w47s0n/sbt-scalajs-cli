@@ -5,23 +5,35 @@ import java.nio.file.{Paths, Files}
 import com.w47s0n.consolebox.Consolebox
 import com.w47s0n.consolebox.*
 import scala.util.matching.Regex
-import sbt._
-import sbt.Keys._
 import LoggingUtils._
+import java.nio.file.Path
+import com.w47s0n.scalajscli.util.ScalaJSCodeWatcher.CompanionProcess
+import scala.tools.util.PathResolver.AsLines
+
 
 object CLIHelper {
   private val DevServerUrl = "http://localhost:9876"
+
+  case class FastOptJS(sourceDirs: List[Path], compilationRunner: () => Boolean)
+
+  /* npm, bun, yan.... */
+  case class JSDevServer(
+    runCommand: Cmd,
+    installPackagesCommand: Cmd,
+    startupMessage: String, 
+    successMessage: String,
+  )
+
+  case class Cmd(command: String, successPattern: Regex)
 
   def boxedConfigs(configs: (String, String)*): String = {
     val formattedLines = configs.map { case (key, value) => s"$key: $value" }
     Consolebox.box(formattedLines.mkString("\n"))
   }
 
-  private def installPackages(prefix: String = ""): Unit = {
-    val command = List("bun", "install") ++ (if (prefix.nonEmpty) Seq("--cwd", prefix) else Seq.empty)
-    val pattern = "packages installed".r
+  private def installPackages(cmd: Cmd): Unit = {
     val successMessage = boxedSuccess("Installed packages successfully !")
-    CommandWatcher.watch(command, pattern, successMessage)
+    CommandWatcher.watch(cmd.command.split(" "), cmd.successPattern, successMessage)
   }
 
   private def removeDistFolderIfAny(prefix: String = ""): Unit = {
@@ -33,7 +45,7 @@ object CLIHelper {
   }
 
   def buildFrontend(prefix: String = "", backendUrl: Option[String] = None): Unit = {
-    installPackages(prefix)
+    // installPackages(prefix)
     val distPrefix = if (prefix.isEmpty) "" else s"$prefix/"
     removeDistFolderIfAny(distPrefix)
 
@@ -61,33 +73,19 @@ object CLIHelper {
     }
   }
 
-  def startDevEnvironment(
-    scalaVersion: String,
-    sourceDirectories: Seq[File],
-    compilationRunner: () => Boolean,
-    devCommand: Seq[String],
-    backendUrl: Option[String] = None
-  ): Unit = {
-    installPackages(prefix = "") // TODO:
-    printStartupMessage(backendUrl)
-
+  def startDevEnvironment(fastOptJSTask: FastOptJS, js: JSDevServer): Unit = {
+    installPackages(js.installPackagesCommand)
+    val toolName = js.runCommand.command.split(" ").head
+    println(Consolebox.box(js.startupMessage))
     val viteServerStarter = () => {
       var viteReadyCalled = false
       val viteLogger = ProcessLogger(
         line => {
-          if (line.contains("Running") && !viteReadyCalled) {
+          if (js.runCommand.successPattern.findFirstIn(line).isDefined && !viteReadyCalled) {
             viteReadyCalled = true
-            val messages = Seq(
-              "Development environment ready!",
-              s"changeme - Web app now available on $DevServerUrl"
-            ) ++ backendUrl.map(url => s"Backend URL: $url") ++ Seq(
-              "",
-              "Press Ctrl+C to stop"
-            ) ++ backendUrl.map(_ => "Tip: Change backend URL: BACKEND_BASE_URL=http://myserver.com sbt")
-
-            logSuccess(messages: _*)
+            logSuccess(js.successMessage)
           }
-          println(s"[Tauri] $line")
+          println(s"[$toolName] $line")
         },
         line => {
           // Filter stderr: only treat actual errors as errors
@@ -99,36 +97,19 @@ object CLIHelper {
                               (lowerLine.contains("error") && lowerLine.contains("code"))
 
           if (isActualError) {
-            logError(s"[Tauri ERROR] $line")
+            logError(s"[toolName] $line")
           } else {
-            println(s"[Tauri] $line")
+            println(s"[toolName] $line")
           }
         }
       )
 
-      // val devCommand = Seq("bun", "run", "tauri", "dev") ++ (if (prefix.nonEmpty) Seq("--cwd", prefix) else Seq.empty)
-      Process(
-        devCommand,
+      Process(js.runCommand.command,
         None,
         "FORCE_COLOR" -> "1"
       ).run(viteLogger)
     }
 
-    new ScalaJSCodeWatcher(
-      sourceDirectories,
-      compilationRunner,
-      ScalaJSCodeWatcher.CompanionProcess("Tauri dev server", viteServerStarter)
-    ).start()
-  }
-
-  private def printStartupMessage(backendUrl: Option[String]): Unit = {
-    val configs = Seq(
-      "Starting development environment" -> ""
-    ) ++ backendUrl.map(url => "Backend URL" -> url) ++ Seq(
-      "Scala.js compiler" -> "Starting in watch mode...",
-      "Vite dev server" -> "Starting..."
-    )
-
-    println(boxedConfigs(configs: _*))
+    new ScalaJSCodeWatcher(fastOptJSTask, CompanionProcess(toolName, viteServerStarter)).start()
   }
 }
