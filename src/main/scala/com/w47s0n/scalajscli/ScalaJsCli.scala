@@ -5,6 +5,7 @@ import sbt.Keys._
 import org.scalajs.sbtplugin.ScalaJSPlugin
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 import com.w47s0n.scalajscli.util.CLIHelper
+import scala.util.matching.Regex
 
 object ScalaJsCli extends AutoPlugin {
 
@@ -12,9 +13,28 @@ object ScalaJsCli extends AutoPlugin {
   override def requires = ScalaJSPlugin
   override def trigger = allRequirements
 
+  case class Cmd(command: String, successPattern: Regex)
+
+  case class JSDevServer(
+      runCommand: Cmd,
+      installPackagesCommand: Cmd,
+      startupMessage: String,
+      successMessage: String
+  )
+
   // Define custom settings and tasks
   object autoImport {
-    val dev = taskKey[Unit]("Start dev mode with continuous Scala.js compilation")
+    val dev =
+      taskKey[Unit]("Start dev mode with continuous Scala.js compilation")
+    val jsDevServer = settingKey[JSDevServer](
+      "JavaScript dev server configuration (command, patterns, messages)"
+    )
+
+    // Export case classes for user convenience
+    type Cmd = ScalaJsCli.Cmd
+    val Cmd = ScalaJsCli.Cmd
+    type JSDevServer = ScalaJsCli.JSDevServer
+    val JSDevServer = ScalaJsCli.JSDevServer
   }
 
   import autoImport._
@@ -23,15 +43,16 @@ object ScalaJsCli extends AutoPlugin {
   override lazy val projectSettings = Seq(
     dev := {
       val sourceDirs = (Compile / sourceDirectories).value.map(_.toPath).toList
-      val taskKey    = Compile / fastOptJS
-      val sbtState   = state.value
+      val taskKey = Compile / fastOptJS
+      val sbtState = state.value
+      val devServer = jsDevServer.value
 
       val compilationRunner = () =>
         try
           Project.runTask(taskKey, sbtState) match {
-            case Some((_, Value(_))) => true  // Success
+            case Some((_, Value(_))) => true // Success
             case Some((_, Inc(_)))   => false // Compilation failed
-            case None =>
+            case None                =>
               println(s"[Scala.js ERROR] Task $taskKey not found")
               false
           }
@@ -42,14 +63,22 @@ object ScalaJsCli extends AutoPlugin {
         }
 
       val task = CLIHelper.FastOptJS(sourceDirs, compilationRunner)
-      val jsDevServer = CLIHelper.JSDevServer(
-        CLIHelper.Cmd("npm run dev", "VITE.*ready".r), // VITE v5.4.21  ready in 157 ms
-        CLIHelper.Cmd("npm install", "packages installed".r),
-        "Starting development environment",
-        "Happy coding"
+      CLIHelper.startDevEnvironment(
+        task,
+        CLIHelper.JSDevServer(
+          CLIHelper.Cmd(
+            devServer.runCommand.command,
+            devServer.runCommand.successPattern
+          ),
+          CLIHelper.Cmd(
+            devServer.installPackagesCommand.command,
+            devServer.installPackagesCommand.successPattern
+          ),
+          devServer.startupMessage,
+          devServer.successMessage
         )
-      CLIHelper.startDevEnvironment(task, jsDevServer)
-    },
+      )
+    }
   )
 
   // Global settings (applied once per build)
