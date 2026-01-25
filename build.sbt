@@ -4,7 +4,9 @@ version := "0.1.0"
 
 sbtPlugin := true
 
-scalaVersion := "2.12.19"
+scalaVersion := "2.12.21"
 
-// Plugin dependencies (if needed)
-// addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.2")
+// Plugin dependencies
+addSbtPlugin(
+  "org.scala-js" % "sbt-scalajs" % "1.20.2"
+) // Q: What happens if client (plugin users) has different scalajs version ?

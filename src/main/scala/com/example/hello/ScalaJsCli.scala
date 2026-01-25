@@ -2,10 +2,12 @@ package com.example.hello
 
 import sbt._
 import sbt.Keys._
+import org.scalajs.sbtplugin.ScalaJSPlugin
 
-object HelloPlugin extends AutoPlugin {
+object ScalaJsCli extends AutoPlugin {
 
-  // This plugin will automatically be enabled for all projects
+  // This plugin will automatically be enabled when ScalaJS plugin is enabled
+  override def requires = ScalaJSPlugin
   override def trigger = allRequirements
 
   // Define custom settings and tasks

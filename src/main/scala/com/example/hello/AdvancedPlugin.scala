@@ -10,8 +10,8 @@ import java.time.format.DateTimeFormatter
  */
 object AdvancedPlugin extends AutoPlugin {
 
-  // Only enable if HelloPlugin is enabled
-  override def requires = HelloPlugin
+  // Only enable if ScalaJsCli is enabled
+  override def requires = ScalaJsCli
 
   // Don't auto-enable, must be explicitly enabled
   override def trigger = noTrigger
@@ -46,7 +46,7 @@ object AdvancedPlugin extends AutoPlugin {
         |Project: ${name.value}
         |Version: ${version.value}
         |Generated: ${LocalDateTime.now()}
-        |Greeting: ${HelloPlugin.autoImport.helloMessage.value}
+        |Greeting: ${ScalaJsCli.autoImport.helloMessage.value}
       """.stripMargin
 
       IO.write(greetingFile, content)
