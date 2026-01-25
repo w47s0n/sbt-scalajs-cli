@@ -1,5 +1,5 @@
-name := "sbt-hello-world-plugin"
-organization := "com.example"
+name := "sbt-scalajs-cli"
+organization := "com.w47s0n"
 version := "0.1.0"
 
 sbtPlugin := true
