@@ -23,7 +23,6 @@ object ScalaJsCli extends AutoPlugin {
   override lazy val projectSettings = Seq(
     dev := {
       val sourceDirs = (Compile / sourceDirectories).value.map(_.toPath).toList
-      val scalaVer   = scalaVersion.value
       val taskKey    = Compile / fastOptJS
       val sbtState   = state.value
 
