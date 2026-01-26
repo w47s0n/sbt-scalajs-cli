@@ -60,62 +60,70 @@ object ScalaJsCli extends AutoPlugin {
   // Default settings that will be automatically added to projects
   override lazy val projectSettings = Seq(
     publishDist := {
-      val _ = (Compile / fullLinkJS).value
-      val tool = jsTool.value
+      jsTool.?.value match {
+        case Some(tool) =>
+          val _ = (Compile / fullLinkJS).value
 
-      CLIHelper.bundleJs(
-        CLIHelper.JSBundle(
-          CLIHelper.Cmd(
-            tool.build.command.command,
-            tool.build.command.successPattern
-          ),
-          CLIHelper.Cmd(
-            tool.installPackagesCommand.command,
-            tool.installPackagesCommand.successPattern
-          ),
-          tool.build.startupMessage,
-          tool.build.successMessage
-        )
-      )
+          CLIHelper.bundleJs(
+            CLIHelper.JSBundle(
+              CLIHelper.Cmd(
+                tool.build.command.command,
+                tool.build.command.successPattern
+              ),
+              CLIHelper.Cmd(
+                tool.installPackagesCommand.command,
+                tool.installPackagesCommand.successPattern
+              ),
+              tool.build.startupMessage,
+              tool.build.successMessage
+            )
+          )
+        case None =>
+          sys.error("jsTool is not configured. Please define jsTool setting in your build.sbt")
+      }
     },
 
     dev := {
-      val sourceDirs = (Compile / sourceDirectories).value.map(_.toPath).toList
-      val taskKey = Compile / fastOptJS
-      val sbtState = state.value
-      val tool = jsTool.value
+      jsTool.?.value match {
+        case Some(tool) =>
+          val sourceDirs = (Compile / sourceDirectories).value.map(_.toPath).toList
+          val taskKey = Compile / fastOptJS
+          val sbtState = state.value
 
-      val compilationRunner = () =>
-        try
-          Project.runTask(taskKey, sbtState) match {
-            case Some((_, Value(_))) => true // Success
-            case Some((_, Inc(_)))   => false // Compilation failed
-            case None                =>
-              println(s"[Scala.js ERROR] Task $taskKey not found")
-              false
-          }
-        catch {
-          case e: Exception =>
-            println(s"[Scala.js ERROR] Compilation error: ${e.getMessage}")
-            false
-        }
+          val compilationRunner = () =>
+            try
+              Project.runTask(taskKey, sbtState) match {
+                case Some((_, Value(_))) => true // Success
+                case Some((_, Inc(_)))   => false // Compilation failed
+                case None                =>
+                  println(s"[Scala.js ERROR] Task $taskKey not found")
+                  false
+              }
+            catch {
+              case e: Exception =>
+                println(s"[Scala.js ERROR] Compilation error: ${e.getMessage}")
+                false
+            }
 
-      val task = CLIHelper.FastOptJS(sourceDirs, compilationRunner)
-      CLIHelper.startDevEnvironment(
-        task,
-        CLIHelper.JSDevServer(
-          CLIHelper.Cmd(
-            tool.dev.command.command,
-            tool.dev.command.successPattern
-          ),
-          CLIHelper.Cmd(
-            tool.installPackagesCommand.command,
-            tool.installPackagesCommand.successPattern
-          ),
-          tool.dev.startupMessage,
-          tool.dev.successMessage
-        )
-      )
+          val task = CLIHelper.FastOptJS(sourceDirs, compilationRunner)
+          CLIHelper.startDevEnvironment(
+            task,
+            CLIHelper.JSDevServer(
+              CLIHelper.Cmd(
+                tool.dev.command.command,
+                tool.dev.command.successPattern
+              ),
+              CLIHelper.Cmd(
+                tool.installPackagesCommand.command,
+                tool.installPackagesCommand.successPattern
+              ),
+              tool.dev.startupMessage,
+              tool.dev.successMessage
+            )
+          )
+        case None =>
+          sys.error("jsTool is not configured. Please define jsTool setting in your build.sbt")
+      }
     }
   )
 }

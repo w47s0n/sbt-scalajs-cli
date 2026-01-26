@@ -1,6 +1,6 @@
 name := "sbt-scalajs-cli"
 organization := "com.w47s0n"
-version := "0.1.0"
+version := "0.1.1"
 
 sbtPlugin := true
 
