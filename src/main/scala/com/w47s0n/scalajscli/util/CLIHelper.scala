@@ -85,9 +85,9 @@ object CLIHelper {
                               (lowerLine.contains("error") && lowerLine.contains("code"))
 
           if (isActualError) {
-            logError(s"[toolName] $line")
+            logError(s"[$toolName] $line")
           } else {
-            println(s"[toolName] $line")
+            println(s"[$toolName] $line")
           }
         }
       )
