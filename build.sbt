@@ -36,6 +36,8 @@ sonatypeRepository := "https://central.sonatype.com/api/v1/publisher"
 // Plugin dependencies
 addSbtPlugin(
   "org.scala-js" % "sbt-scalajs" % "1.20.2"
-) // Q: What happens if client (plugin users) has different scalajs version ?
+)
+// Q: What happens if client (plugin users) has different scalajs version ?
+// A: The safest approach is using % "provided" and documenting the compatible version range.
 
 libraryDependencies += "com.w47s0n" %% "consolebox" % "0.2.1"
