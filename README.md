@@ -1,71 +1,62 @@
-# Hello World SBT Plugin
+# sbt-scalajs-cli
 
-A simple sbt plugin demonstrating core plugin concepts in 2026.
+An sbt plugin that streamlines Scala.js development by integrating JavaScript tooling into your sbt workflow.
 
-## What This Plugin Demonstrates
+## Problem
 
-1. **AutoPlugin**: Modern way to create sbt plugins that auto-enable
-2. **Custom Tasks**: `hello` task that prints a greeting
-3. **Settings**: `helloName` setting to customize the greeting
-4. **Task Dependencies**: `helloMessage` task that uses settings
-5. **Logging**: Using sbt's logging system
-6. **Auto Import**: Making plugin keys available without imports
+When building Scala.js applications, you typically need to juggle multiple processes:
+- Run `sbt ~fastOptJS` to watch and compile Scala code to JavaScript
+- Separately run your dev server (Vite, webpack-dev-server, etc.)
+- Manually coordinate compilation and bundling
+- Switch between terminals and tools
 
-## Project Structure
+This plugin unifies these workflows into simple sbt commands that handle both Scala.js compilation and JavaScript tooling automatically.
 
-```
-sbt-hello-world-plugin/
-├── build.sbt                          # Plugin project definition
-├── src/main/scala/
-│   └── com/example/hello/
-│       └── HelloPlugin.scala          # Plugin implementation
-└── test-project/                      # Test project to try the plugin
-    ├── build.sbt
-    └── project/
-        ├── build.properties
-        └── plugins.sbt                # Loads the plugin
-```
+## Solution
 
-## Key Concepts
+- `sbt dev` - Start dev mode with file watching, auto-compilation, and dev server
+- `sbt publishDist` - Build optimized Scala.js bundle and run production build
 
-### AutoPlugin
-- `extends AutoPlugin` - Modern plugin base class
-- `trigger = allRequirements` - Auto-enables for all projects
-- Other triggers: `noTrigger`, `AllRequirements`, specific requirements
+Configure once, then use familiar sbt commands for your entire full-stack workflow
 
-### autoImport Object
-Keys defined here are automatically imported in build.sbt files:
-- `taskKey[T]` - Defines a task that returns T
-- `settingKey[T]` - Defines a setting of type T
+## Installation
 
-### Settings Scopes
-- `projectSettings` - Applied to each project
-- `buildSettings` - Applied once per build
-- `globalSettings` - Applied globally
+**1. Add the plugin to your project**
 
-## Testing the Plugin
-
-```bash
-cd test-project
-sbt hello
-```
-
-## Publishing (Optional)
-
-To use this plugin in other projects, publish it locally:
-
-```bash
-sbt publishLocal
-```
-
-Then in another project's `project/plugins.sbt`:
+In `project/plugins.sbt`:
 ```scala
-addSbtPlugin("com.example" % "sbt-hello-world-plugin" % "0.1.0")
+addSbtPlugin("com.w47s0n" % "sbt-scalajs-cli" % "0.1.1")
 ```
 
-## Customizing the Plugin
+**2. Configure your JavaScript tooling**
 
-In your `build.sbt`:
+In your Scala.js project's settings in `build.sbt`:
 ```scala
-helloName := "Your Name"  // Changes the greeting
+import com.w47s0n.scalajscli.ScalaJsCli.autoImport._
+
+lazy val frontend = (project in file("frontend"))
+  .enablePlugins(ScalaJSPlugin)
+  .settings(
+    jsTool := JSToolConfig(
+      installPackagesCommand = Cmd("npm install", ".*".r),
+      dev = DevConfig(
+        command = Cmd("npm run dev", ".*ready.*".r),
+        startupMessage = "Starting dev server...",
+        successMessage = "Dev server ready!"
+      ),
+      build = BuildConfig(
+        command = Cmd("npm run build", ".*built.*".r),
+        startupMessage = "Building for production...",
+        successMessage = "Build complete!"
+      )
+    )
+  )
 ```
+
+**3. Run your tasks**
+```bash
+sbt frontend/dev          # Start development mode
+sbt frontend/publishDist  # Build for production
+```
+
+The plugin automatically enables on any project with ScalaJS enabled, but requires `jsTool` configuration to function.
