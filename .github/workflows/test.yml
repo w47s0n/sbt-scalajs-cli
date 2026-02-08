@@ -95,10 +95,6 @@ jobs:
           fi
           echo "✓ Build artifacts verified"
 
-      - name: Test multi-project - Compile
-        working-directory: ./test-multi-project
-        run: sbt compile
-
       - name: Test multi-project - Dev command (30s timeout)
         working-directory: ./test-multi-project
         timeout-minutes: 1
