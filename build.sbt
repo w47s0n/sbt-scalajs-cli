@@ -1,6 +1,6 @@
 name := "sbt-scalajs-cli"
 organization := "com.w47s0n"
-version := "0.1.1"
+version := "0.2.0"
 
 sbtPlugin := true
 
@@ -26,12 +26,6 @@ developers := List(
     url("https://github.com/w47s0n")
   )
 )
-
-// Publishing settings
-publishMavenStyle := true
-publishTo := sonatypePublishToBundle.value
-sonatypeCredentialHost := "central.sonatype.com"
-sonatypeRepository := "https://central.sonatype.com/api/v1/publisher"
 
 // Plugin dependencies
 addSbtPlugin(

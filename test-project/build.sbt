@@ -7,19 +7,22 @@ enablePlugins(ScalaJSPlugin)
 // Scala.js configuration
 scalaJSUseMainModuleInitializer := true
 
+// Source maps seem to be broken with bundler
+Compile / fastOptJS / scalaJSLinkerConfig ~= { _.withSourceMap(false) }
+Compile / fullOptJS / scalaJSLinkerConfig ~= { _.withSourceMap(false) }
 // Add scala-js-dom dependency
 libraryDependencies += "org.scala-js" %%% "scalajs-dom" % "2.4.0"
 
 // Configure JavaScript tooling (npm, bun, yarn, etc.)
 jsTool := JSToolConfig(
-  installPackagesCommand = Cmd("npm install", ".*added.*packages".r),
+  installPackagesCommand = Cmd.npm.install,
   dev = DevConfig(
-    command = Cmd("npm run dev", "VITE.*ready".r),
+    command = Cmd.npm.run("dev"),
     startupMessage = "Starting Vite development environment",
     successMessage = "Development server is ready!"
   ),
   build = BuildConfig(
-    command = Cmd("npm run build", "built in".r),
+    command = Cmd.npm.build,
     startupMessage = "Building production JavaScript bundle",
     successMessage = "Production build completed successfully!"
   )

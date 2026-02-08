@@ -13,16 +13,20 @@ object CommandWatcher {
   private def removeAnsiCodes(text: String): String =
     text.replaceAll("\u001B\\[[;\\d]*m", "")
 
-  def watch(command: Seq[String], pattern: Regex, successMessage: String): Unit = {
+  def watch(cmd: CLIHelper.Cmd, successMessage: String): Unit = {
 
-    val process = Process(command, None, "FORCE_COLOR" -> "1").run(
+    val process = Process(
+      cmd.command.split(" "),
+      cmd.workingDir,
+      "FORCE_COLOR" -> "1"
+    ).run(
       new ProcessIO(
-        _ => (), 
+        _ => (),
         stdout =>
           readStream(
             stdout,
             line =>{
-              if (pattern.findFirstIn(removeAnsiCodes(line)).isDefined)
+              if (cmd.successPattern.findFirstIn(removeAnsiCodes(line)).isDefined)
                 println(s"\n$successMessage")
             }
           ),

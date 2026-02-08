@@ -9,6 +9,7 @@ import LoggingUtils._
 import java.nio.file.Path
 import com.w47s0n.scalajscli.util.ScalaJSCodeWatcher.CompanionProcess
 import scala.tools.util.PathResolver.AsLines
+import sbt.File
 
 
 object CLIHelper {
@@ -20,11 +21,11 @@ object CLIHelper {
   case class JSDevServer(
     runCommand: Cmd,
     installPackagesCommand: Cmd,
-    startupMessage: String, 
+    startupMessage: String,
     successMessage: String,
   )
 
-  case class Cmd(command: String, successPattern: Regex)
+  case class Cmd(command: String, successPattern: Regex, workingDir: Option[File] = None)
 
   def boxedConfigs(configs: (String, String)*): String = {
     val formattedLines = configs.map { case (key, value) => s"$key: $value" }
@@ -33,7 +34,7 @@ object CLIHelper {
 
   private def installPackages(cmd: Cmd): Unit = {
     val successMessage = boxedSuccess("Installed packages successfully !")
-    CommandWatcher.watch(cmd.command.split(" "), cmd.successPattern, successMessage)
+    CommandWatcher.watch(cmd, successMessage)
   }
 
   private def removeDistFolderIfAny(prefix: String = ""): Unit = {
@@ -55,8 +56,7 @@ object CLIHelper {
     installPackages(bundle.installPackagesCommand)
     println(Consolebox.box(bundle.startupMessage))
     CommandWatcher.watch(
-      bundle.buildCommand.command.split(" "),
-      bundle.buildCommand.successPattern,
+      bundle.buildCommand,
       boxedSuccess(bundle.successMessage)
     )
   }
@@ -92,8 +92,9 @@ object CLIHelper {
         }
       )
 
-      Process(js.runCommand.command,
-        None,
+      Process(
+        js.runCommand.command.split(" "),
+        js.runCommand.workingDir,
         "FORCE_COLOR" -> "1"
       ).run(viteLogger)
     }

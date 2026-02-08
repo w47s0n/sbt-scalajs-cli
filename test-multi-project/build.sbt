@@ -23,18 +23,19 @@ lazy val frontend = (project in file("frontend"))
     name := "frontend",
     scalaVersion := "3.8.1",
     scalaJSUseMainModuleInitializer := true,
-
+// Source maps seem to be broken with bundler
+    Compile / fastOptJS / scalaJSLinkerConfig ~= { _.withSourceMap(false) },
+    Compile / fullOptJS / scalaJSLinkerConfig ~= { _.withSourceMap(false) },
     // Configure jsTool for this ScalaJS project
     jsTool := JSToolConfig(
-      installPackagesCommand =
-        Cmd("npm install --prefix frontend", "d+ package".r),
+      installPackagesCommand = Cmd.npm.install.withPrefix("frontend"),
       dev = DevConfig(
-        command = Cmd("npm run --prefix frontend dev", ".*ready.*".r),
+        command = Cmd.npm.run("dev").withPrefix("frontend"),
         startupMessage = "Starting Vite dev server...",
         successMessage = "Vite dev server ready!"
       ),
       build = BuildConfig(
-        command = Cmd("npm run build", ".*built.*".r),
+        command = Cmd.npm.build.withPrefix("frontend"),
         startupMessage = "Building with Vite...",
         successMessage = "Vite build complete!"
       )

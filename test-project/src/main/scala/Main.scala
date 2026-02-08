@@ -21,7 +21,7 @@ object Main {
   }
 
   def setupCounter(): Unit = {
-    var count = 100
+    var count = 0
     val button = document.getElementById("counterBtn")
 
     button.addEventListener("click", { (_: dom.Event) =>
