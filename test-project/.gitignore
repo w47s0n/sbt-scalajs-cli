@@ -1,0 +1,16 @@
+# Scala.js generated config
+scalajs-config.json
+
+# Build outputs
+target/
+dist/
+
+# Dependencies
+node_modules/
+
+# IDE
+.bsp/
+.metals/
+.vscode/
+.idea/
+*.iml
