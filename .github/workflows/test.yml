@@ -1,0 +1,161 @@
+name: Test Plugin
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Test sbt-scalajs-cli plugin
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'sbt'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: |
+            test-project/package-lock.json
+            test-multi-project/frontend/package-lock.json
+
+      - name: Compile plugin
+        run: sbt compile
+
+      - name: Publish plugin locally
+        run: sbt publishLocal
+
+      - name: Test single project - Compile
+        working-directory: ./test-project
+        run: sbt compile
+
+      - name: Test single project - Install dependencies
+        working-directory: ./test-project
+        run: npm install
+
+      - name: Test single project - Dev command (30s timeout)
+        working-directory: ./test-project
+        timeout-minutes: 1
+        run: |
+          set +e  # Don't exit on error (dev will be killed)
+          timeout 30s sbt dev &
+          DEV_PID=$!
+
+          # Wait for dev server to start
+          echo "Waiting for dev server to start..."
+          sleep 15
+
+          # Check if process is still running
+          if ps -p $DEV_PID > /dev/null; then
+            echo "✓ Dev server started successfully"
+            kill $DEV_PID 2>/dev/null || true
+            wait $DEV_PID 2>/dev/null || true
+            exit 0
+          else
+            echo "✗ Dev server failed to start"
+            exit 1
+          fi
+
+      - name: Test single project - Clean for build test
+        working-directory: ./test-project
+        run: |
+          rm -rf dist
+          sbt clean
+
+      - name: Test single project - PublishDist command
+        working-directory: ./test-project
+        run: sbt publishDist
+
+      - name: Test single project - Verify build output
+        working-directory: ./test-project
+        run: |
+          if [ ! -d "dist" ]; then
+            echo "✗ dist directory not created"
+            exit 1
+          fi
+          if [ ! -f "dist/index.html" ]; then
+            echo "✗ dist/index.html not found"
+            exit 1
+          fi
+          echo "✓ Build artifacts verified"
+
+      - name: Test multi-project - Compile
+        working-directory: ./test-multi-project
+        run: sbt compile
+
+      - name: Test multi-project - Install dependencies
+        working-directory: ./test-multi-project/frontend
+        run: npm install
+
+      - name: Test multi-project - Dev command (30s timeout)
+        working-directory: ./test-multi-project
+        timeout-minutes: 1
+        run: |
+          set +e  # Don't exit on error (dev will be killed)
+          timeout 30s sbt frontend/dev &
+          DEV_PID=$!
+
+          # Wait for dev server to start
+          echo "Waiting for dev server to start..."
+          sleep 15
+
+          # Check if process is still running
+          if ps -p $DEV_PID > /dev/null; then
+            echo "✓ Dev server started successfully"
+            kill $DEV_PID 2>/dev/null || true
+            wait $DEV_PID 2>/dev/null || true
+            exit 0
+          else
+            echo "✗ Dev server failed to start"
+            exit 1
+          fi
+
+      - name: Test multi-project - Clean for build test
+        working-directory: ./test-multi-project
+        run: |
+          rm -rf frontend/dist
+          sbt clean
+
+      - name: Test multi-project - PublishDist command
+        working-directory: ./test-multi-project
+        run: sbt frontend/publishDist
+
+      - name: Test multi-project - Verify build output
+        working-directory: ./test-multi-project/frontend
+        run: |
+          if [ ! -d "dist" ]; then
+            echo "✗ dist directory not created"
+            exit 1
+          fi
+          if [ ! -f "dist/index.html" ]; then
+            echo "✗ dist/index.html not found"
+            exit 1
+          fi
+          echo "✓ Build artifacts verified"
+
+      - name: Summary
+        if: success()
+        run: |
+          echo "════════════════════════════════════════════════════════"
+          echo "✓ All tests passed!"
+          echo "════════════════════════════════════════════════════════"
+          echo "✓ Plugin compilation"
+          echo "✓ Single project - compile"
+          echo "✓ Single project - dev command"
+          echo "✓ Single project - publishDist command"
+          echo "✓ Multi-project - compile"
+          echo "✓ Multi-project - dev command (with .withPrefix())"
+          echo "✓ Multi-project - publishDist command"
+          echo "════════════════════════════════════════════════════════"
