@@ -49,10 +49,6 @@ jobs:
         working-directory: ./test-project
         run: sbt compile
 
-      - name: Test single project - Install dependencies
-        working-directory: ./test-project
-        run: npm install
-
       - name: Test single project - Dev command (30s timeout)
         working-directory: ./test-project
         timeout-minutes: 1
@@ -102,10 +98,6 @@ jobs:
       - name: Test multi-project - Compile
         working-directory: ./test-multi-project
         run: sbt compile
-
-      - name: Test multi-project - Install dependencies
-        working-directory: ./test-multi-project/frontend
-        run: npm install
 
       - name: Test multi-project - Dev command (30s timeout)
         working-directory: ./test-multi-project
