@@ -27,14 +27,11 @@ final class ScalaJSCodeWatcher(
   @volatile private var cleanedUp: Boolean = false
   @volatile private var runningProcess: Option[Process] = None
 
-  private def logScalaJsInfo(message: String): Unit = println(s"[Scala.js] $message")
-  private def logScalaJsError(message: String): Unit = println(s"[Scala.js ERROR] $message")
-
   def start(): Unit = {
     logScalaJsInfo("Running initial compilation...")
     val succeeded = this.scalaTask.compilationRunner()
     if (succeeded) {
-      logSuccess(s"[Scala.js] Initial compilation completed at ${currentTimeFormatted()}")
+      logScalaJsInfo("Initial compilation completed")
       startDevEnvironment()
     } else {
       logError(
@@ -132,7 +129,7 @@ final class ScalaJSCodeWatcher(
     logScalaJsInfo(s"Detected $fileCount Scala file change(s), recompiling...")
     val succeeded = this.scalaTask.compilationRunner()
     if (succeeded) {
-      logScalaJsInfo(s"Recompilation completed at ${currentTimeFormatted()}")
+      logScalaJsInfo("Recompilation completed")
     }
   }
 

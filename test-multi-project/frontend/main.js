@@ -1,5 +1,2 @@
-// This will load the ScalaJS generated output
-import './target/scala-3.8.1/frontend-fastopt/main.js'
-
-// Initialize the ScalaJS app
-Main.main()
+// Dynamically load the appropriate Scala.js build (fastopt/opt)
+import './scalajs-loader.js'

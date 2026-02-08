@@ -49,4 +49,23 @@ object LoggingUtils {
 
   def currentTimeFormatted(): String =
     LocalTime.now().format(DateTimeFormatter.ofPattern("h:mm a"))
+
+  def currentTimeFormattedWithSeconds(): String =
+    LocalTime.now().format(DateTimeFormatter.ofPattern("h:mm:ss a"))
+
+  // ANSI color codes for styled logging
+  private val CYAN = "\u001B[36m"
+  private val GREEN = "\u001B[32m"
+  private val RED = "\u001B[31m"
+  private val RESET = "\u001B[0m"
+
+  def logScalaJsInfo(message: String): Unit = {
+    val timestamp = s"$CYAN${currentTimeFormattedWithSeconds()}$RESET"
+    println(s"${GREEN}[Scala.js]$RESET $timestamp $message")
+  }
+
+  def logScalaJsError(message: String): Unit = {
+    val timestamp = s"$CYAN${currentTimeFormattedWithSeconds()}$RESET"
+    println(s"${RED}[Scala.js ERROR]$RESET $timestamp $message")
+  }
 }
