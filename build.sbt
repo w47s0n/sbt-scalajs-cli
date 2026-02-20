@@ -1,8 +1,10 @@
 name := "sbt-scalajs-cli"
 organization := "com.w47s0n"
-version := "0.2.0"
 
 sbtPlugin := true
+
+ThisBuild / versionScheme := Some("semver-spec")
+sonatypeCredentialHost := "central.sonatype.com"
 
 scalaVersion := "2.12.21"
 
