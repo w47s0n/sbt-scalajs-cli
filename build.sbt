@@ -4,6 +4,8 @@ organization := "com.w47s0n"
 sbtPlugin := true
 
 ThisBuild / versionScheme := Some("semver-spec")
+ThisBuild / pomIncludeRepository := { _ => false }
+ThisBuild / publishMavenStyle := true
 ThisBuild / publishTo := {
   val centralSnapshots = "https://central.sonatype.com/repository/maven-snapshots/"
   if (isSnapshot.value) Some("central-snapshots" at centralSnapshots)
