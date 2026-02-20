@@ -6,7 +6,6 @@ sbtPlugin := true
 ThisBuild / versionScheme := Some("semver-spec")
 ThisBuild / pomIncludeRepository := { _ => false }
 ThisBuild / publishMavenStyle := true
-sonatypeCredentialHost := "central.sonatype.com"
 
 scalaVersion := "2.12.21"
 
