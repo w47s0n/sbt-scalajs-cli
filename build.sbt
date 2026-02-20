@@ -6,12 +6,7 @@ sbtPlugin := true
 ThisBuild / versionScheme := Some("semver-spec")
 ThisBuild / pomIncludeRepository := { _ => false }
 ThisBuild / publishMavenStyle := true
-ThisBuild / publishTo := {
-  val centralSnapshots =
-    "https://central.sonatype.com/repository/maven-snapshots/"
-  if (isSnapshot.value) Some("central-snapshots" at centralSnapshots)
-  else localStaging.value
-}
+sonatypeCredentialHost := "central.sonatype.com"
 
 scalaVersion := "2.12.21"
 
