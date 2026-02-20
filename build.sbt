@@ -1,13 +1,15 @@
 name := "sbt-scalajs-cli"
 organization := "com.w47s0n"
-version := "0.2.0"
 
 sbtPlugin := true
 
+ThisBuild / versionScheme := Some("semver-spec")
+ThisBuild / pomIncludeRepository := { _ => false }
+ThisBuild / publishMavenStyle := true
+
 scalaVersion := "2.12.21"
 
-// Project metadata
-description := "An sbt plugin for Scala.js development with built-in dev server support"
+description := "An sbt plugin for working with bundle tools"
 licenses := Seq(
   "Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")
 )
