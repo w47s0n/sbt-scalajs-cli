@@ -4,7 +4,11 @@ organization := "com.w47s0n"
 sbtPlugin := true
 
 ThisBuild / versionScheme := Some("semver-spec")
-sonatypeCredentialHost := "central.sonatype.com"
+ThisBuild / publishTo := {
+  val centralSnapshots = "https://central.sonatype.com/repository/maven-snapshots/"
+  if (isSnapshot.value) Some("central-snapshots" at centralSnapshots)
+  else localStaging.value
+}
 
 scalaVersion := "2.12.21"
 
