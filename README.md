@@ -1,5 +1,7 @@
 # sbt-scalajs-cli
 
+[![Maven Central](https://img.shields.io/maven-central/v/com.w47s0n/sbt-scalajs-cli_2.12_1.0)](https://central.sonatype.com/artifact/com.w47s0n/sbt-scalajs-cli_2.12_1.0)
+
 An sbt plugin that streamlines Scala.js development by integrating JavaScript tooling into your sbt workflow.
 
 ## Problem
@@ -25,7 +27,7 @@ Configure once, then use familiar sbt commands for your entire full-stack workfl
 
 In `project/plugins.sbt`:
 ```scala
-addSbtPlugin("com.w47s0n" % "sbt-scalajs-cli" % "0.2.0")
+addSbtPlugin("com.w47s0n" % "sbt-scalajs-cli" % "0.2.1")
 ```
 
 **2. Configure your JavaScript tooling**
