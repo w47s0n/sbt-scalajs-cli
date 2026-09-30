@@ -177,7 +177,8 @@ object ScalaJsCli extends AutoPlugin {
       jsTool.?.value match {
         case Some(tool) =>
           val sourceDirs = (Compile / sourceDirectories).value.map(_.toPath).toList
-          val taskKey = Compile / fastOptJS
+          // Fully scope to the owning project; runTask would otherwise resolve against the session's current project
+          val taskKey = thisProjectRef.value / Compile / fastOptJS
           val sbtState = state.value
 
           val compilationRunner = () =>
