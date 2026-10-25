@@ -61,10 +61,12 @@ object CLIHelper {
     )
   }
 
-  def startDevEnvironment(fastOptJSTask: FastOptJS, js: JSDevServer): Unit = {
+  def startDevEnvironment(fastOptJSTask: FastOptJS, js: JSDevServer, logFile: File): Unit = {
+    openLogFile(logFile)
+    logScalaJsInfo(s"Logging to ${logFile.getPath}")
     installPackages(js.installPackagesCommand)
     val toolName = js.runCommand.command.split(" ").head
-    println(Consolebox.box(js.startupMessage))
+    out(Consolebox.box(js.startupMessage))
     val viteServerStarter = () => {
       var viteReadyCalled = false
       val viteLogger = ProcessLogger(
@@ -73,7 +75,7 @@ object CLIHelper {
             viteReadyCalled = true
             logSuccess(js.successMessage)
           }
-          println(s"[$toolName] $line")
+          out(s"[$toolName] $line")
         },
         line => {
           // Filter stderr: only treat actual errors as errors
@@ -87,7 +89,7 @@ object CLIHelper {
           if (isActualError) {
             logError(s"[$toolName] $line")
           } else {
-            println(s"[$toolName] $line")
+            out(s"[$toolName] $line")
           }
         }
       )

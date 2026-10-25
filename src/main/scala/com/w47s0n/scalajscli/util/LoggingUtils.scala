@@ -4,6 +4,7 @@ import com.w47s0n.consolebox.Consolebox
 import com.w47s0n.consolebox.*
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import java.io.{File, FileWriter, PrintWriter}
 
 /**
  * Shared logging utilities for development environment tools.
@@ -28,20 +29,41 @@ object LoggingUtils {
     Consolebox.box(lines.mkString("\n"))
 
   // ============================================================================
+  // Log file (tee of stdout)
+  // ============================================================================
+
+  // ponytail: one global log per sbt JVM; `dev` blocks so only one runs at a time
+  @volatile private var logWriter: Option[PrintWriter] = None
+
+  def openLogFile(f: File): Unit = {
+    f.getParentFile.mkdirs()
+    logWriter.foreach(_.close())
+    logWriter = Some(new PrintWriter(new FileWriter(f, false), true))
+  }
+
+  def stripAnsi(text: String): String =
+    text.replaceAll("\u001B\\[[;\\d]*m", "")
+
+  def out(line: String): Unit = synchronized {
+    println(line)
+    logWriter.foreach(_.println(stripAnsi(line)))
+  }
+
+  // ============================================================================
   // Direct Logging Helpers (print to stdout)
   // ============================================================================
 
   def logSuccess(lines: String*): Unit =
-    println(boxedSuccess(lines: _*))
+    out(boxedSuccess(lines: _*))
 
   def logError(lines: String*): Unit =
-    println(boxedError(lines: _*))
+    out(boxedError(lines: _*))
 
   def logWarning(lines: String*): Unit =
-    println(boxedWarning(lines: _*))
+    out(boxedWarning(lines: _*))
 
   def logInfo(lines: String*): Unit =
-    println(boxedInfo(lines: _*))
+    out(boxedInfo(lines: _*))
 
   // ============================================================================
   // Utility Methods
@@ -61,11 +83,11 @@ object LoggingUtils {
 
   def logScalaJsInfo(message: String): Unit = {
     val timestamp = s"$CYAN${currentTimeFormattedWithSeconds()}$RESET"
-    println(s"${GREEN}[Scala.js]$RESET $timestamp $message")
+    out(s"${GREEN}[Scala.js]$RESET $timestamp $message")
   }
 
   def logScalaJsError(message: String): Unit = {
     val timestamp = s"$CYAN${currentTimeFormattedWithSeconds()}$RESET"
-    println(s"${RED}[Scala.js ERROR]$RESET $timestamp $message")
+    out(s"${RED}[Scala.js ERROR]$RESET $timestamp $message")
   }
 }

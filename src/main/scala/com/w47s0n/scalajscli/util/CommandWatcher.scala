@@ -10,9 +10,6 @@ object CommandWatcher {
     Iterator.continually(reader.readLine()).takeWhile(_ != null).foreach(onLine)
   }
 
-  private def removeAnsiCodes(text: String): String =
-    text.replaceAll("\u001B\\[[;\\d]*m", "")
-
   def watch(cmd: CLIHelper.Cmd, successMessage: String): Unit = {
 
     val process = Process(
@@ -26,7 +23,7 @@ object CommandWatcher {
           readStream(
             stdout,
             line =>{
-              if (cmd.successPattern.findFirstIn(removeAnsiCodes(line)).isDefined)
+              if (cmd.successPattern.findFirstIn(LoggingUtils.stripAnsi(line)).isDefined)
                 println(s"\n$successMessage")
             }
           ),
