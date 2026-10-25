@@ -5,6 +5,7 @@ import sbt.Keys._
 import org.scalajs.sbtplugin.ScalaJSPlugin
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 import com.w47s0n.scalajscli.util.CLIHelper
+import com.w47s0n.scalajscli.util.LoggingUtils.logScalaJsError
 import scala.util.matching.Regex
 
 object ScalaJsCli extends AutoPlugin {
@@ -185,14 +186,24 @@ object ScalaJsCli extends AutoPlugin {
             try
               Project.runTask(taskKey, sbtState) match {
                 case Some((_, Value(_))) => true // Success
-                case Some((_, Inc(_)))   => false // Compilation failed
+                case Some((_, Inc(inc))) =>
+                  Incomplete.allExceptions(inc).foreach {
+                    case cf: xsbti.CompileFailed => cf.problems.foreach { p =>
+                      val pos = p.position
+                      val file = pos.sourceFile.map[String](_.getPath).orElse(pos.sourcePath.orElse("?"))
+                      val line = pos.line.map[String](_.toString).orElse("?")
+                      logScalaJsError(s"[${p.severity}] $file:$line: ${p.message}")
+                    }
+                    case e                       => logScalaJsError(String.valueOf(e.getMessage))
+                  }
+                  false
                 case None                =>
-                  println(s"[Scala.js ERROR] fastOptJS task not found. Make sure you're running this command on a Scala.js project (e.g., 'sbt frontend/dev' in multi-project builds)")
+                  logScalaJsError(s"fastOptJS task not found. Make sure you're running this command on a Scala.js project (e.g., 'sbt frontend/dev' in multi-project builds)")
                   false
               }
             catch {
               case e: Exception =>
-                println(s"[Scala.js ERROR] Compilation error: ${e.getMessage}")
+                logScalaJsError(s"Compilation error: ${e.getMessage}")
                 false
             }
 
@@ -212,7 +223,8 @@ object ScalaJsCli extends AutoPlugin {
               ),
               tool.dev.startupMessage,
               tool.dev.successMessage
-            )
+            ),
+            target.value / "dev.log"
           )
         case None =>
           sys.error("jsTool is not configured. Please define jsTool setting in your build.sbt")

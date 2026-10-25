@@ -130,6 +130,8 @@ final class ScalaJSCodeWatcher(
     val succeeded = this.scalaTask.compilationRunner()
     if (succeeded) {
       logScalaJsInfo("Recompilation completed")
+    } else {
+      logScalaJsError("Recompilation failed")
     }
   }
 

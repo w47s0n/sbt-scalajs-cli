@@ -63,6 +63,15 @@ sbt frontend/publishDist  # Build for production
 
 The plugin automatically enables on any project with ScalaJS enabled, but requires `jsTool` configuration to function.
 
+## Dev Log File
+
+`dev` also writes its output (compile results, compiler errors with file:line, and dev server output) to `target/dev.log` in the Scala.js project, without ANSI colors. The file is truncated each time `dev` starts. Handy for tools or agents that need the latest compile result:
+
+```bash
+tail -f target/dev.log           # single project
+tail -f frontend/target/dev.log  # multi-project
+```
+
 ## Package Manager Support
 
 The plugin provides type-safe builders for popular package managers:
